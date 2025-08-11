@@ -25,13 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# AVISO DE SEGURANÇA: usado para criptografias internas do Django (nunca deve ser exposto em produção).
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+# AVISO DE SEGURANÇA: usado para criptografias internas do Django (nunca deve ser exposto em produção, exceto por fins de avaliação).
+SECRET_KEY = "4b!o6=@m**vyd#lyoo6^-9^j+fa8ys@pokjr*#=0yq3387o(*h"
 
 # AVISO DE SEGURANÇA: Mostra erros detalhados, NÃO usar em produção.
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] # Define quais domínios podem acessar a aplicação.
+ALLOWED_HOSTS = ['*'] # Permitir qualquer host para fins de avaliação (não recomendado em produção).
 
 # Definições da aplicação
 
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -57,6 +58,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = "config.urls" # Aponta para o arquivo de rotas do projeto.
 
@@ -87,9 +90,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 #     }
 # }
 
+DB_DEFAULT_URL = os.environ.get('DATABASE_URL') or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "XPlace",
+        "USER": "postgres",
+        "PASSWORD": "ebac",
+        "HOST": "localhost",  # vai mudar para o host do Render depois
+        "PORT": "5433",
+    }
 }
+
+if os.environ.get("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.parse(os.environ["DATABASE_URL"], conn_max_age=600, ssl_require=True)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -126,6 +140,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+if not DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -155,7 +173,9 @@ SITE_URL = "http://localhost:8000"
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_SECURE = True  # Exige HTTPS para cookies.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
