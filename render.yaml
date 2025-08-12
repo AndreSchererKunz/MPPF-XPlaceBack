@@ -3,8 +3,8 @@ services:
     name: mpfback-twitterclone
     env: python
     plan: free
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn config.wsgi:application"
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

@@ -167,7 +167,7 @@ REST_FRAMEWORK = {
 }
 
 # Útil para exibir URLs completas de imagens nos serializers.
-SITE_URL = "http://localhost:8000"
+SITE_URL = "postgresql://mpfback_db_user:NYDFDGbehEfKmcXCCxYeNPXSCqPvFGLo@dpg-d2d97bogjchc73deumtg-a.oregon-postgres.render.com/mpfback_db"
 
 # Controla o tempo de expiração de sessão (7 dias).
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
