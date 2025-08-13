@@ -25,6 +25,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all() # Define o conjunto de dados base que será manipulado (todos os usuários).
     serializer_class = UserSerializer # Define o serializer padrão para transformar o modelo em JSON.
     permission_classes = [permissions.IsAuthenticatedOrReadOnly] # Permite leitura pública, mas só usuários autenticados podem fazer alterações (POST, PUT...).
+    lookup_field = 'username'
 
     @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated]) # Cria um endpoint GET /users/me/ para obter os próprios dados e PATCH /users/me/ para atualizar.
     def me(self, request):
@@ -67,22 +68,17 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return Response(user_data)
     
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly],
-            url_path='profile/(?P<username>[^/.]+)/followers')
+        url_path=r'profile/(?P<username>[^/.]+)/followers')
     def followers(self, request, username=None):
-        # Lista todos os seguidores de um usuário específico.
         user = get_object_or_404(CustomUser, username=username)
-        followers_qs = user.followers.all()
-        serializer = UserSerializer(followers_qs, many=True, context={'request': request})
-        return Response(serializer.data)
+        return Response(UserSerializer(user.followers.all(), many=True, context={'request': request}).data)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly],
-            url_path='profile/(?P<username>[^/.]+)/following')
+        url_path=r'profile/(?P<username>[^/.]+)/following')
     def following(self, request, username=None):
-        # Lista todos os usuários que um usuário específico está seguindo.
         user = get_object_or_404(CustomUser, username=username)
-        following_qs = user.following.all()
-        serializer = UserSerializer(following_qs, many=True, context={'request': request})
-        return Response(serializer.data)
+        return Response(UserSerializer(user.following.all(), many=True, context={'request': request}).data)
+
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def follow(self, request, pk=None):
