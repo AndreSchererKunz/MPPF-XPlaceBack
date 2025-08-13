@@ -25,12 +25,14 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from notifications.views import NotificationViewSet
 
 router = DefaultRouter()
 router.register(r'users', CustomUserViewSet)
 router.register(r'posts', PostViewSet)
 router.register(r'most-liked-posts', MostLikedPostsViewSet, basename="most-liked-posts")
 router.register(r'random-users', RandomFollowersViewSet, basename="random-users")
+router.register(r'notifications', NotificationViewSet, basename='notifications')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

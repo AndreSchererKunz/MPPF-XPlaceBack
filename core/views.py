@@ -81,8 +81,16 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Unfollowed"}, status=204)
         else:
             user.following.add(target_user)
-            return Response({"detail": "Followed"}, status=201)
-        # Alterna entre seguir e deixar de seguir.
+
+            from notifications.utils import create_notification
+            create_notification(
+                recipient=target_user,
+                sender=request.user,
+                type='FOLLOW',
+                message=f'{request.user.username} começou a seguir você'
+            )
+
+        return Response({"detail": "Followed"}, status=201)
 
 # Lista os posts mais curtidos.
 class MostLikedPostsViewSet(viewsets.ModelViewSet):
@@ -166,6 +174,16 @@ class PostViewSet(viewsets.ModelViewSet):
             post.likes.remove(request.user)
         else:
             post.likes.add(request.user)
+
+            from notifications.utils import create_notification
+            create_notification(
+                recipient=post.user,
+                sender=request.user,
+                type='LIKE',
+                post=post,
+                message=f'{request.user.username} curtiu seu post'
+            )
+
         return Response(status=204)
 
     # Favoritos: salva ou remove post dos bookmarks.
@@ -176,6 +194,16 @@ class PostViewSet(viewsets.ModelViewSet):
             post.bookmark.remove(request.user)
         else:
             post.bookmark.add(request.user)
+
+            from notifications.utils import create_notification
+            create_notification(
+                recipient=post.user,
+                sender=request.user,
+                type='BOOKMARK',
+                post=post,
+                message=f'{request.user.username} salvou seu post'
+            )
+
         return Response(status=204)
 
     # Repost: cria ou desfaz repost de um post existente.
@@ -189,4 +217,14 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Repost removed"}, status=204)
 
         Post.objects.create(user=request.user, repost=original_post)
+
+        from notifications.utils import create_notification
+        create_notification(
+            recipient=original_post.user,
+            sender=request.user,
+            type='REPOST',
+            post=original_post,
+            message=f'{request.user.username} repostou seu post'
+        )
+
         return Response({"detail": "Repost created"}, status=201)
