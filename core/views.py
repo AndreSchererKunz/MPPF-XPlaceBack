@@ -65,6 +65,24 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             "is_following": request.user in user.followers.all() if request.user.is_authenticated else False
         }
         return Response(user_data)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly],
+            url_path='profile/(?P<username>[^/.]+)/followers')
+    def followers(self, request, username=None):
+        # Lista todos os seguidores de um usuário específico.
+        user = get_object_or_404(CustomUser, username=username)
+        followers_qs = user.followers.all()
+        serializer = UserSerializer(followers_qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly],
+            url_path='profile/(?P<username>[^/.]+)/following')
+    def following(self, request, username=None):
+        # Lista todos os usuários que um usuário específico está seguindo.
+        user = get_object_or_404(CustomUser, username=username)
+        following_qs = user.following.all()
+        serializer = UserSerializer(following_qs, many=True, context={'request': request})
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def follow(self, request, pk=None):
@@ -87,7 +105,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
                 recipient=target_user,
                 sender=request.user,
                 type='FOLLOW',
-                message=f'{request.user.username} começou a seguir você'
+                message=f'{request.user.username} começou a seguir você  '
             )
 
         return Response({"detail": "Followed"}, status=201)
@@ -181,7 +199,7 @@ class PostViewSet(viewsets.ModelViewSet):
                 sender=request.user,
                 type='LIKE',
                 post=post,
-                message=f'{request.user.username} curtiu seu post'
+                message=f'{request.user.username} curtiu seu post  '
             )
 
         return Response(status=204)
@@ -201,7 +219,7 @@ class PostViewSet(viewsets.ModelViewSet):
                 sender=request.user,
                 type='BOOKMARK',
                 post=post,
-                message=f'{request.user.username} salvou seu post'
+                message=f'{request.user.username} salvou seu post  '
             )
 
         return Response(status=204)
@@ -224,7 +242,7 @@ class PostViewSet(viewsets.ModelViewSet):
             sender=request.user,
             type='REPOST',
             post=original_post,
-            message=f'{request.user.username} repostou seu post'
+            message=f'{request.user.username} repostou seu post  '
         )
 
         return Response({"detail": "Repost created"}, status=201)
