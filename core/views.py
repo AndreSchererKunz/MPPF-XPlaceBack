@@ -67,17 +67,35 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         }
         return Response(user_data)
     
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly],
-        url_path=r'profile/(?P<username>[^/.]+)/followers')
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticatedOrReadOnly],
+        url_path=r'profile/(?P<username>[^/.]+)/followers'
+    )
     def followers(self, request, username=None):
         user = get_object_or_404(CustomUser, username=username)
-        return Response(UserSerializer(user.followers.all(), many=True, context={'request': request}).data)
+        qs = user.followers.all().order_by('id')
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly],
-        url_path=r'profile/(?P<username>[^/.]+)/following')
+        paginator = PostPagination()
+        page = paginator.paginate_queryset(qs, request)
+        serializer = UserSerializer(page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticatedOrReadOnly],
+        url_path=r'profile/(?P<username>[^/.]+)/following'
+    )
     def following(self, request, username=None):
         user = get_object_or_404(CustomUser, username=username)
-        return Response(UserSerializer(user.following.all(), many=True, context={'request': request}).data)
+        qs = user.following.all().order_by('id')
+
+        paginator = PostPagination()
+        page = paginator.paginate_queryset(qs, request)
+        serializer = UserSerializer(page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
 
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
